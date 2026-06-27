@@ -37,7 +37,12 @@ bool initPMU() {
         // Activer DCDC1 pour l'alimentation de l'ESP32 et de la carte générale
         pPMU->enablePowerOutput(XPOWERS_DCDC1);
         
-        Serial.println("[PMU] AXP2101 PMU Initialized: Enabled GPS (ALDO3), LoRa (ALDO2), and DCDC1.");
+        // Activer l'ADC général, la mesure de température et la mesure de tension de batterie
+        pPMU->enableBattVoltageMeasure();
+        PMU.enableGeneralAdcChannel();
+        PMU.enableTemperatureMeasure();
+        
+        Serial.println("[PMU] AXP2101 PMU Initialized: Enabled GPS (ALDO3), LoRa (ALDO2), DCDC1, and ADCs.");
         return true;
     }
 #else
@@ -54,7 +59,10 @@ bool initPMU() {
         // Activer DC1 pour l'alimentation générale de l'ESP32
         PMU.enableDC1();
         
-        Serial.println("[PMU] AXP192 PMU Initialized: Enabled GPS (LDO3), LoRa (LDO2), and DC1.");
+        // Activer la mesure de tension de la batterie (ADC)
+        PMU.enableBattVoltageMeasure();
+        
+        Serial.println("[PMU] AXP192 PMU Initialized: Enabled GPS (LDO3), LoRa (LDO2), DC1, and Battery ADC.");
         return true;
     }
 #endif
