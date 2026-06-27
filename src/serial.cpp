@@ -103,3 +103,45 @@ void sendNectarFrame(uint8_t ssid_type, uint8_t ssid_num, uint8_t apid, const ui
     }
 #endif
 }
+
+/**
+ * @brief Traite et émet les données de télémétrie sur les ports de communication série (USB/Bluetooth).
+ * @param packet Structure de télémétrie Wasp-TX à émettre.
+ */
+void outputTelemetryFrame(const wasp_payload_t& packet) {
+    // Émettre la trame formatée Nectar (USB et/ou Bluetooth selon configuration)
+    // On passe le reste des données à partir de l'octet 3 (utc) pour éviter la duplication des en-têtes
+    sendNectarFrame(packet.type, packet.id, packet.apid, (const uint8_t*)&packet + 3, sizeof(wasp_payload_t) - 3, 0, 0);
+
+#if ENABLE_DEBUG_LOGS
+    // Remplissage des coordonnées GPS (conversion float en tableau d'octets)
+    union FloatConverter { float f; uint8_t b[4]; };
+    FloatConverter conv;
+    float lat, lon, alt, spd, cog;
+    
+    memcpy(conv.b, packet.lat, 4); lat = conv.f;
+    memcpy(conv.b, packet.lon, 4); lon = conv.f;
+    memcpy(conv.b, packet.alt, 4); alt = conv.f;
+    memcpy(conv.b, packet.spd, 4); spd = conv.f;
+    memcpy(conv.b, packet.cog, 4); cog = conv.f;
+
+    Serial.printf("[TX] UTC:%lu | POS:%.5f, %.5f | ALT:%.1fm | SPD:%.1fkm/h | COG:%.1f° | T:%.2f°C | SAT:%d | BAT:%dmV | STATUS:0x%02X\n", 
+                  packet.utc, 
+                  lat, 
+                  lon, 
+                  alt, 
+                  spd, 
+                  cog,
+                  (float)packet.temp / 100.0f, 
+                  packet.sats, 
+                  packet.vbat,
+                  packet.status);
+
+    Serial.print("[HEX] ");
+    const uint8_t* p = (const uint8_t*)&packet;
+    for (size_t i = 0; i < sizeof(wasp_payload_t); i++) {
+        Serial.printf("%02X ", p[i]);
+    }
+    Serial.println();
+#endif
+}

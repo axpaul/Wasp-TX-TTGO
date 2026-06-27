@@ -190,30 +190,8 @@ void send_telemetry() {
         packet.status |= (1 << 0); // Bit 0: Fix GPS valide
     }
     
-    // Affichage des informations formatées pour le débogage série
-    Serial.printf("[TX] UTC:%lu | POS:%.5f, %.5f | ALT:%.1fm | SPD:%.1fkm/h | COG:%.1f° | T:%.2f°C | SAT:%d | BAT:%dmV | STATUS:0x%02X\n", 
-                  packet.utc, 
-                  gps.location.lat(), 
-                  gps.location.lng(), 
-                  gps.altitude.meters(), 
-                  gps.speed.kmph(), 
-                  gps.course.deg(),
-                  (float)packet.temp / 100.0f, 
-                  packet.sats, 
-                  packet.vbat,
-                  packet.status);
-
-    // Log brute HEX
-    Serial.print("[HEX] ");
-    uint8_t* p = (uint8_t*)&packet;
-    for (size_t i = 0; i < sizeof(packet); i++) {
-        Serial.printf("%02X ", p[i]);
-    }
-    Serial.println();
-    
-    // Envoi de la trame binaire sur USB/Bluetooth (pour le diagnostic direct au sol)
-    // RSSI=0, SNR=0 car le paquet est généré localement
-    sendNectarFrame(activeConfig.trackerType, activeConfig.trackerId, activeConfig.apid, (uint8_t*)&packet + 3, sizeof(wasp_payload_t) - 3, 0, 0);
+    // Traiter et émettre les données de télémétrie sur les ports de communication série (USB/Bluetooth)
+    outputTelemetryFrame(packet);
 
     // Envoi de la télémétrie dans la file de transmission radio
     if (gpsQueue != NULL) {
